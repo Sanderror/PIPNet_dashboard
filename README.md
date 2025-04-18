@@ -16,6 +16,8 @@
 
 ## Step 5: Add argument/parameter to configuration to let the model use the pretrained network
 * I am not sure how to do this in VScode or others, but in Pycharm you can click at the top on the 'Current file' or 'main' or whatever it says. Then you can add a configuration for the main.py file (by just selecting the path to the main.py file), then in the empty field you can add the argument: --state_dict_dir_net net_trained
+* ![image](https://github.com/user-attachments/assets/71d5d646-a507-434c-bb98-62dacc84af0c)
+* ![image](https://github.com/user-attachments/assets/b48b16b3-c675-497d-8a38-95e8df8a4889)
 * ![image](https://github.com/user-attachments/assets/4e84ee73-d3ba-4842-831e-486250709b15)
 
 ## Step 6: Run the main.py file and find results
