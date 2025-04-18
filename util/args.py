@@ -10,8 +10,9 @@ import torch.optim
     Utility functions for handling parsed arguments
 
 """
-def get_args() -> argparse.Namespace:
 
+
+def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser('Train a PIP-Net')
     parser.add_argument('--dataset',
                         type=str,
@@ -27,11 +28,11 @@ def get_args() -> argparse.Namespace:
                         help='Base network used as backbone of PIP-Net. Default is convnext_tiny_26 with adapted strides to output 26x26 latent representations. Other option is convnext_tiny_13 that outputs 13x13 (smaller and faster to train, less fine-grained). Pretrained network on iNaturalist is only available for resnet50_inat. Options are: resnet18, resnet34, resnet50, resnet50_inat, resnet101, resnet152, convnext_tiny_26 and convnext_tiny_13.')
     parser.add_argument('--batch_size',
                         type=int,
-                        default=64,
+                        default=32,
                         help='Batch size when training the model using minibatch gradient descent. Batch size is multiplied with number of available GPUs')
     parser.add_argument('--batch_size_pretrain',
                         type=int,
-                        default=128,
+                        default=32,
                         help='Batch size when pretraining the prototypes (first training stage)')
     parser.add_argument('--epochs',
                         type=int,
@@ -39,7 +40,7 @@ def get_args() -> argparse.Namespace:
                         help='The number of epochs PIP-Net should be trained (second training stage)')
     parser.add_argument('--epochs_pretrain',
                         type=int,
-                        default = 10,
+                        default=10,
                         help='Number of epochs to pre-train the prototypes (first training stage). Recommended to train at least until the align loss < 1'
                         )
     parser.add_argument('--optimizer',
@@ -48,16 +49,16 @@ def get_args() -> argparse.Namespace:
                         help='The optimizer that should be used when training PIP-Net')
     parser.add_argument('--lr',
                         type=float,
-                        default=0.05, 
+                        default=0.05,
                         help='The optimizer learning rate for training the weights from prototypes to classes')
     parser.add_argument('--lr_block',
                         type=float,
-                        default=0.0005, 
+                        default=0.0005,
                         help='The optimizer learning rate for training the last conv layers of the backbone')
     parser.add_argument('--lr_net',
                         type=float,
-                        default=0.0005, 
-                        help='The optimizer learning rate for the backbone. Usually similar as lr_block.') 
+                        default=0.0005,
+                        help='The optimizer learning rate for the backbone. Usually similar as lr_block.')
     parser.add_argument('--weight_decay',
                         type=float,
                         default=0.0,
@@ -71,7 +72,7 @@ def get_args() -> argparse.Namespace:
                         help='The directory in which train progress should be logged')
     parser.add_argument('--num_features',
                         type=int,
-                        default = 0,
+                        default=0,
                         help='Number of prototypes. When zero (default) the number of prototypes is the number of output channels of backbone. If this value is set, then a 1x1 conv layer will be added. Recommended to keep 0, but can be increased when number of classes > num output channels in backbone.')
     parser.add_argument('--image_size',
                         type=int,
@@ -83,7 +84,7 @@ def get_args() -> argparse.Namespace:
                         help='The directory containing a state dict with a pretrained PIP-Net. E.g., ./runs/run_pipnet/checkpoints/net_pretrained')
     parser.add_argument('--freeze_epochs',
                         type=int,
-                        default = 10,
+                        default=10,
                         help='Number of epochs where pretrained features_net will be frozen while training classification layer (and last layer(s) of backbone)'
                         )
     parser.add_argument('--dir_for_saving_images',
@@ -107,7 +108,7 @@ def get_args() -> argparse.Namespace:
                         help='ID of gpu. Can be separated with comma')
     parser.add_argument('--num_workers',
                         type=int,
-                        default=8,
+                        default=4,
                         help='Num workers in dataloaders.')
     parser.add_argument('--bias',
                         action='store_true',
@@ -119,10 +120,9 @@ def get_args() -> argparse.Namespace:
                         help='Folder with images that PIP-Net will predict and explain, that are not in the training or test set. E.g. images with 2 objects or OOD image. Images should be in subfolder. E.g. images in ./experiments/images/, and argument --./experiments')
 
     args = parser.parse_args()
-    if len(args.log_dir.split('/'))>2:
+    if len(args.log_dir.split('/')) > 2:
         if not os.path.exists(args.log_dir):
             os.makedirs(args.log_dir)
-
 
     return args
 
@@ -147,36 +147,37 @@ def save_args(args: argparse.Namespace, directory_path: str) -> None:
             f.write('{}: {}\n'.format(arg, val))
     # Pickle the args for possible reuse
     with open(directory_path + '/args.pickle', 'wb') as f:
-        pickle.dump(args, f)                                                                               
-    
+        pickle.dump(args, f)
+
+
 def get_optimizer_nn(net, args: argparse.Namespace) -> torch.optim.Optimizer:
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
 
-    #create parameter groups
+    # create parameter groups
     params_to_freeze = []
     params_to_train = []
     params_backbone = []
     # set up optimizer
-    if 'resnet50' in args.net: 
+    if 'resnet50' in args.net:
         # freeze resnet50 except last convolutional layer
-        for name,param in net.module._net.named_parameters():
+        for name, param in net.module._net.named_parameters():
             if 'layer4.2' in name:
                 params_to_train.append(param)
             elif 'layer4' in name or 'layer3' in name:
                 params_to_freeze.append(param)
             elif 'layer2' in name:
                 params_backbone.append(param)
-            else: #such that model training fits on one gpu. 
+            else:  # such that model training fits on one gpu.
                 param.requires_grad = False
                 # params_backbone.append(param)
-    
+
     elif 'convnext' in args.net:
         print("chosen network is convnext", flush=True)
-        for name,param in net.module._net.named_parameters():
-            if 'features.7.2' in name: 
+        for name, param in net.module._net.named_parameters():
+            if 'features.7.2' in name:
                 params_to_train.append(param)
             elif 'features.7' in name or 'features.6' in name:
                 params_to_freeze.append(param)
@@ -188,7 +189,7 @@ def get_optimizer_nn(net, args: argparse.Namespace) -> torch.optim.Optimizer:
             else:
                 params_backbone.append(param)
     else:
-        print("Network is not ResNet or ConvNext.", flush=True)     
+        print("Network is not ResNet or ConvNext.", flush=True)
     classification_weight = []
     classification_bias = []
     for name, param in net.module._classification.named_parameters():
@@ -199,21 +200,21 @@ def get_optimizer_nn(net, args: argparse.Namespace) -> torch.optim.Optimizer:
         else:
             if args.bias:
                 classification_bias.append(param)
-    
+
     paramlist_net = [
-            {"params": params_backbone, "lr": args.lr_net, "weight_decay_rate": args.weight_decay},
-            {"params": params_to_freeze, "lr": args.lr_block, "weight_decay_rate": args.weight_decay},
-            {"params": params_to_train, "lr": args.lr_block, "weight_decay_rate": args.weight_decay},
-            {"params": net.module._add_on.parameters(), "lr": args.lr_block*10., "weight_decay_rate": args.weight_decay}]
-            
+        {"params": params_backbone, "lr": args.lr_net, "weight_decay_rate": args.weight_decay},
+        {"params": params_to_freeze, "lr": args.lr_block, "weight_decay_rate": args.weight_decay},
+        {"params": params_to_train, "lr": args.lr_block, "weight_decay_rate": args.weight_decay},
+        {"params": net.module._add_on.parameters(), "lr": args.lr_block * 10., "weight_decay_rate": args.weight_decay}]
+
     paramlist_classifier = [
-            {"params": classification_weight, "lr": args.lr, "weight_decay_rate": args.weight_decay},
-            {"params": classification_bias, "lr": args.lr, "weight_decay_rate": 0},
+        {"params": classification_weight, "lr": args.lr, "weight_decay_rate": args.weight_decay},
+        {"params": classification_bias, "lr": args.lr, "weight_decay_rate": 0},
     ]
-          
+
     if args.optimizer == 'Adam':
-        optimizer_net = torch.optim.AdamW(paramlist_net,lr=args.lr,weight_decay=args.weight_decay)
-        optimizer_classifier = torch.optim.AdamW(paramlist_classifier,lr=args.lr,weight_decay=args.weight_decay)
+        optimizer_net = torch.optim.AdamW(paramlist_net, lr=args.lr, weight_decay=args.weight_decay)
+        optimizer_classifier = torch.optim.AdamW(paramlist_classifier, lr=args.lr, weight_decay=args.weight_decay)
         return optimizer_net, optimizer_classifier, params_to_freeze, params_to_train, params_backbone
     else:
         raise ValueError("this optimizer type is not implemented")

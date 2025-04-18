@@ -1,8 +1,8 @@
 dataset: 'CUB-200-2011'
 validation_size: 0.0
 net: 'convnext_tiny_26'
-batch_size: 64
-batch_size_pretrain: 128
+batch_size: 32
+batch_size_pretrain: 32
 epochs: 60
 optimizer: 'Adam'
 lr: 0.05
@@ -21,5 +21,5 @@ epochs_pretrain: 10
 weighted_loss: False
 seed: 1
 gpu_ids: ''
-num_workers: 8
+num_workers: 4
 bias: False
