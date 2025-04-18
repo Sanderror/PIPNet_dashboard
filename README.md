@@ -28,6 +28,7 @@
 
 # Instruction to run the app
 ## Step 1: Install streamlit package into your environment
+* pip install streamlit in your terminal (and in your environment)
 
 ## Step 2: Launch the app
 * You can launch the app by typing in the terminal (in your project directory, in your environment): streamlit run app.py
