@@ -11,7 +11,7 @@
 * Inside that same data folder, add another folder called 'user_images' in which you should upload a test image (of a bird) that you want to get classified
 
 ## Step 4: Add the pretrained network
-* From this other link:   you can download the pretrained network (and some other files on already visualized prototypes). Place all the contents of this zip inside your project
+* From this other link: https://drive.google.com/file/d/195oPh4-ugl8LkqFrlPwzHaZ3rH16Jc7a/view you can download the pretrained network (and some other files on already visualized prototypes). Place all the contents of this zip inside your project
 * Most important is the checkpoints folder which includes the net_trained (the pretrained network)
 
 ## Step 5: Add argument/parameter to configuration to let the model use the pretrained network
