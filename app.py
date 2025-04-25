@@ -3,9 +3,12 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+import re
+import random
 
 USER_IMAGES_DIR = Path("data/user_images/uploaded_images")
 RESULTS_DIR = Path("runs/run_pipnet/visualization_results")
+CLASS_DIR = Path("data/CUB_200_2011/dataset/train")
 
 # Utility functions
 def clear_folder(folder):
@@ -57,9 +60,20 @@ if st.button("Predict"):
         run_prediction_script()
     st.success("Prediction complete!")
 
-    st.subheader("🔎 Top 3 Predictions")
     predictions = parse_predictions()
-    for image_id, preds in predictions.items():
-        st.markdown(f"**{image_id}**")
+    i = 1
+    for img in USER_IMAGES_DIR.iterdir():
+        print(img)
+        img_name = img.name
+        st.header(f"🖼️ Image {i}: {img_name}")
+        img_scraped = re.sub(r'\.(jpg|jpeg|png)$', '', img_name, flags=re.IGNORECASE)
+        preds = predictions[img_scraped]
+        st.image(f"{USER_IMAGES_DIR}/{img_name}", caption=f"Uploaded image", width=256)
+        st.subheader(f"🔎 Top 3 Predictions")
         for cls, score in preds:
             st.write(f"🔹 {cls} — {score:.3f}")
+            class_dir = os.path.join(CLASS_DIR, cls)
+            class_samples = [f for f in os.listdir(class_dir)]
+            random_sample = random.choice(class_samples)
+            st.image(f"{class_dir}/{random_sample}", caption=f"Sample image for class {cls}", width=128)
+        i += 1
