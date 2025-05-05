@@ -16,6 +16,7 @@ import numpy as np
 from shutil import copy
 import matplotlib.pyplot as plt
 from copy import deepcopy
+import pickle
 
 class Tee(object):
     def __init__(self, *files):
@@ -483,7 +484,14 @@ if __name__ == '__main__':
     test_path = os.path.split(os.path.split(testset_img0_path)[0])[0]
     print(f"Image path or something {test_path}")
     vis_pred(net, test_path, classes, device, args)
+    print(f"size {net.module._classification.weight.size()}")
+    print(f"rows {net.module._classification.weight.shape[0]}")
+    print(f"random value {net.module._classification.weight[34, 172]}: should be 3.629")
+    print("Save the model weights in pt file")
+    dir = args.log_dir + '/net_weights.pt'
+    torch.save(net.module._classification.weight, dir)
     print("Oye, i think it ran. Lets check the folders with the results")
+
 
     # run_pipnet(args)
 
