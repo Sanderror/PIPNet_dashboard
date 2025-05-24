@@ -68,7 +68,7 @@ def vis_pred(net, vis_test_dir, classes, device, args: argparse.Namespace):
             softmaxes, pooled, out = net(xs,
                                          inference=True)  # softmaxes has shape (bs, num_prototypes, W, H), pooled has shape (bs, num_prototypes), out has shape (bs, num_classes)
             sorted_out, sorted_out_indices = torch.sort(out.squeeze(0), descending=True)
-            for pred_class_idx in sorted_out_indices[:3]:
+            for pred_class_idx in sorted_out_indices:
                 pred_class = classes[pred_class_idx]  # e.g. 001.Black_footed_ALbatross
                 save_path = os.path.join(dir, pred_class + "_" + str(f"{out[0, pred_class_idx].item():.3f}"))
                 if not os.path.exists(save_path):
