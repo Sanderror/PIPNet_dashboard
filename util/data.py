@@ -380,7 +380,8 @@ def get_grayscale(augment: bool, train_dir: str, project_dir: str, test_dir: str
 
 # Trying to create a function to load one image such that the input is right for the vis_pred function
 def load_image(args, test_dir='./data/user_images', train_dir='./data/CUB_200_2011/dataset/train_crop'):
-    # Transformations or something
+    '''Function based on other dataloader functions, but then adjusted for our case with the uploaded images'''
+    # Transformations
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
     normalize = transforms.Normalize(mean=mean, std=std)
@@ -424,7 +425,7 @@ def load_image(args, test_dir='./data/user_images', train_dir='./data/CUB_200_20
                                              drop_last=False
                                              )
 
-    # bullshit for trainloader
+    # needed for trainloader
     to_shuffle = True
     sampler = None
 

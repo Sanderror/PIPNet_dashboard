@@ -369,7 +369,12 @@ def run_pipnet(args=None):
     print("Done!", flush=True)
 
 if __name__ == '__main__':
-    print("Hello, step 1")
+    ### THIS WHOLE FIRST BLOCK IS COPIED FROM THE ORIGINAL main.py FILE, WHICH WAS NEEDED IN ORDER TO LOAD THE NETWORK AND AVOID OTHER ERRORS
+    # THERE IS ONLY ONE ADJUSTMENT, AND THAT IS THE ADDED FUNCTION load_image() WHICH WAS USED TO LOAD THE USER UPLOADED IMAGES INTO TEST LOADERS
+
+    # ----------------------------------------------------------------------------------------------
+    # FIRST BLOCK
+    # -----------------------------------------------------------------------------------------------
     args = get_args()
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
@@ -386,7 +391,6 @@ if __name__ == '__main__':
     sys.stdout = Tee(sys.__stdout__, print_file)
     sys.stderr = Tee(sys.__stderr__, tqdm_file)
 
-    # Something with devices
     gpu_list = args.gpu_ids.split(',')
     device_ids = []
     if args.gpu_ids != '':
@@ -416,13 +420,11 @@ if __name__ == '__main__':
     # Log which device was actually used
     print("Device used: ", device, "with id", device_ids, flush=True)
 
-    print("Starting pipnet")
-    print("Loading the data")
+    ### THIS IS THE ONLY CHANGE WE MADE TO THIS FIRST BLOCK
+    # WE CREATED OUR OWN FUNCTION TO LOAD IMAGES INTO TRAIN AND TEST LOADERS, WHICH WE COULD AFTERWARDS FEED INTO vis_pred() FUNCTION
     trainloader, testloader, testset, classes = load_image(args)
-    print(f"data loaded {testloader}")
 
     feature_net, add_on_layers, pool_layer, classification_layer, num_prototypes = get_network(len(classes), args)
-    print("Creating a pip net or something")
     # Create a PIP-Net
     net = PIPNet(num_classes=len(classes),
                  num_prototypes=num_prototypes,
@@ -437,7 +439,6 @@ if __name__ == '__main__':
 
     optimizer_net, optimizer_classifier, params_to_freeze, params_to_train, params_backbone = get_optimizer_nn(net,
                                                                                                                args)
-    print("Initialize a modelll")
     # Initialize or load model
     with torch.no_grad():
         if args.state_dict_dir_net != '':
@@ -473,27 +474,24 @@ if __name__ == '__main__':
             torch.nn.init.constant_(net.module._multiplier, val=2.)
             net.module._multiplier.requires_grad = False
 
-            print("Classification layer initialized with mean", torch.mean(net.module._classification.weight).item(),
-                  flush=True)
+            # print("Classification layer initialized with mean", torch.mean(net.module._classification.weight).item(),
+            #       flush=True)
 
     args.wshape = 26 #needed for calculating image patch size
-    print(f"What is that wshape: {args.wshape}")
 
+    # -------------------------------------------------------------------------------------------------------------------
+    # SECOND BLOCK
+    # -------------------------------------------------------------------------------------------------------------------
+    # IN THIS BLOCK WE ACTUALLY MADE CHANGES SUCH THAT THE MODEL COULD PREDICT OUR UPLOADED IMAGES AND RETURN THE DESIRED OUTPUT
 
     testset_img0_path = testloader.dataset.samples[0][0]
     test_path = os.path.split(os.path.split(testset_img0_path)[0])[0]
-    print(f"Image path or something {test_path}")
+    # The vis_pred function has been changed
     vis_pred(net, test_path, classes, device, args)
-    print(f"size {net.module._classification.weight.size()}")
-    print(f"rows {net.module._classification.weight.shape[0]}")
-    print(f"random value {net.module._classification.weight[34, 172]}: should be 3.629")
-    print("Save the model weights in pt file")
+
+    # We save the trained weights twice, because one will be used to allow users to update the network weights
+    # and the other is used to reset to original network weights (if user presses the reset button)
     dir = args.log_dir + '/net_weights.pt'
+    dir_2 = args.log_dir + '/original_net_weights.pt'
     torch.save(net.module._classification.weight, dir)
-    print("Oye, i think it ran. Lets check the folders with the results")
-
-
-    # run_pipnet(args)
-
-    # sys.stdout.close()
-    # sys.stderr.close()
+    torch.save(net.module._classification.weight, dir_2)

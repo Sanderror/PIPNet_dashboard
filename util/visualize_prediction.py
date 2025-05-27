@@ -64,7 +64,6 @@ def vis_pred(net, vis_test_dir, classes, device, args: argparse.Namespace):
             shutil.copy(img, dir)
 
         with torch.no_grad():
-            ### THIS WE CAN USE FOR PREDICTIONS I THINKKKK
             softmaxes, pooled, out = net(xs,
                                          inference=True)  # softmaxes has shape (bs, num_prototypes, W, H), pooled has shape (bs, num_prototypes), out has shape (bs, num_classes)
             sorted_out, sorted_out_indices = torch.sort(out.squeeze(0), descending=True)
