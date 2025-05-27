@@ -1,4 +1,4 @@
-# Instructions to run the code (no app)
+# Instructions to run the app
 ## Step 1: Clone the project
 
 ## Step 2: Install packages
