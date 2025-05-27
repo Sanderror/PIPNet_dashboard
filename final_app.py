@@ -267,7 +267,7 @@ def render_predictions_tab():
     # Show the uploaded image once more
     st.subheader("3️⃣ Top 3 predicted bird species for your image")
     if image_path and image_path.exists():
-        st.image(image_path, caption="Your uploaded image", width=400)
+        st.image(str(image_path), caption="Your uploaded image", width=400)
     st.markdown("---")
 
     # Go through all top 3 predictions and create a separate section for each
